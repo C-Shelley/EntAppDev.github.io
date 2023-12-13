@@ -1,0 +1,115 @@
+﻿@page "/"
+@inject HttpClient Http
+
+
+
+
+<h1>ISRO Spacecraft Data</h1>
+
+
+
+@if (data == null)
+{
+
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <button class="button bg-dark text-light" @onclick='() => SortBy("name")'>Click to sort by name</button>
+    <hr/>
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Launch Date</th>
+                <th>Application</th>
+                <th>Status</th>
+                <th>Orbit Type</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in data)
+            {
+                <tr>
+                    <td>@entry.name</td>
+                    <td>@entry.launchDate</td>
+                    <td>@entry.application</td>
+                    <td>@entry.missionStatus</td>
+                    <td>@entry.orbitType</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    
+    
+    
+}
+
+
+
+
+
+
+
+@code {
+
+    private Spacecraft[] data;
+    public string currentSortField;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        data = await Http.GetFromJsonAsync<Spacecraft[]>("https://services.isrostats.in/api/spacecraft");
+
+    }
+
+    public class Spacecraft
+    {
+
+        public string id{ get; set; }
+        public string serialNumber { get; set; }
+        public string name { get; set; }
+        public string launchDate { get; set; }
+        public string launchVehicle { get; set; }
+        public string orbitType { get; set; }
+        public string application { get; set; }
+        public string missionStatus { get; set; }
+        public string updatedAt { get; set; }
+
+    }
+
+    private object GetSpacecraft(Spacecraft entry, string name)
+    {
+        var info = typeof(Spacecraft).GetProperty(name);
+        return info.GetValue(entry);
+    }
+
+    private void SortBy(string name)
+    {
+        if (currentSortField != name)
+        {
+            data = data.OrderBy(entry => GetSpacecraft(entry, name)).ToArray();
+        }
+        else
+        {
+            data = data.Reverse().ToArray();
+        }
+        currentSortField = name;
+    }
+
+    
+
+
+}
+
+
+
+@*
+CORS enabled on function app
+this app is published as an Azure app service also 
+*@
+
+
